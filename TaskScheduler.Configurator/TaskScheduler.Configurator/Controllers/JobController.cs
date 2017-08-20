@@ -1,15 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System.Collections.Generic;
 using System.Net;
-using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using Swashbuckle.AspNetCore.SwaggerGen;
 using TaskScheduler.Jobs.Data.Entities;
 using TaskScheduler.Jobs.Data.Repositories;
-
-// For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
 namespace TaskScheduler.Configurator.Controllers
 {
@@ -22,22 +18,59 @@ namespace TaskScheduler.Configurator.Controllers
         {
             _jobRepository = jobRepository;
         }
+
         [HttpGet]
-        public async Task<JsonResult> All(CancellationToken cancellationToken)
+        [SwaggerResponse((int)HttpStatusCode.OK, typeof(IEnumerable<Job>))]
+        public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
         {
-            return await Task.FromResult(new JsonResult(await _jobRepository.All(cancellationToken)) { StatusCode = (int)HttpStatusCode.OK });
+            return Ok(await _jobRepository.All(cancellationToken));
         }
-        [HttpPost]
-        public async Task<JsonResult> Register([FromBody]Job job, CancellationToken cancellationToken)
+
+        [HttpGet]
+        [Route("{id:int}", Name = "GetJob")]
+        [SwaggerResponse((int)HttpStatusCode.OK, typeof(Job))]
+        public async Task<IActionResult> Get(int id, CancellationToken cancellationToken)
         {
-            await _jobRepository.Add(job, cancellationToken);
-            return await Task.FromResult(new JsonResult(null) {StatusCode = (int)HttpStatusCode.NoContent});
+            var job = await _jobRepository.Get(j => j.Id == id, cancellationToken);
+            if (job == null)
+            {
+                return NotFound();
+            }
+            return Ok(job);
+        }
+
+        [HttpPut]
+        [SwaggerResponse((int)HttpStatusCode.Created)]
+        public async Task<IActionResult> Create([FromBody]Job job, CancellationToken cancellationToken)
+        {
+            var created = await _jobRepository.Add(job, cancellationToken);
+            return CreatedAtRoute("GetJob", new {id = created.Id}, null);
+        }
+
+        [HttpPost]
+        [SwaggerResponse((int)HttpStatusCode.NoContent)]
+        [SwaggerResponse((int)HttpStatusCode.NotFound)]
+        public async Task<IActionResult> Update([FromBody]Job job, CancellationToken cancellationToken)
+        {
+            var found = await _jobRepository.Update(job, cancellationToken);
+            if (!found)
+            {
+                return NotFound();
+            }
+            return NoContent();
         }
 
         [HttpDelete]
-        public async Task<JsonResult> UnRegister(int jobId, CancellationToken cancellationToken)
+        [SwaggerResponse((int)HttpStatusCode.NoContent)]
+        [SwaggerResponse((int)HttpStatusCode.NotFound)]
+        public async Task<IActionResult> Delete(int jobId, CancellationToken cancellationToken)
         {
-            return await Task.FromResult(new JsonResult(null) { StatusCode = (int)HttpStatusCode.NoContent });
+            var found = await _jobRepository.Delete(jobId, cancellationToken);
+            if (!found)
+            {
+                return NotFound();
+            }
+            return NoContent();
         }
     }
 }

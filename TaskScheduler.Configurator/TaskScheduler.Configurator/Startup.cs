@@ -1,14 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using Swashbuckle.AspNetCore.Swagger;
 using TaskScheduler.Jobs.Data;
 using TaskScheduler.Jobs.Data.Repositories;
@@ -28,7 +23,7 @@ namespace TaskScheduler.Configurator
         public IServiceProvider ConfigureServices(IServiceCollection services)
         {
             services.AddDbContext<JobDatabase>(options=>options.UseSqlite(Configuration.GetConnectionString("JobsDatabaseConnection")));
-            services.AddTransient<IJobRepository, JobRepository>();
+            services.AddScoped<IJobRepository, JobRepository>();
             services.AddMvc();
             services.AddSwaggerGen(c =>
             {

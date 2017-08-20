@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq.Expressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
@@ -8,9 +10,11 @@ namespace TaskScheduler.Jobs.Data.Repositories
 {
     public interface IJobRepository
     {
-        Task Add(Job job, CancellationToken cancellationToken);
-        Task Delete(int jobId, CancellationToken cancellationToken);
+        Task<Job> Add(Job job, CancellationToken cancellationToken);
+        Task<bool> Delete(int jobId, CancellationToken cancellationToken);
         Task<IEnumerable<Job>> All(CancellationToken cancellationToken);
+        Task<Job> Get(Expression<Func<Job, bool>> predicate, CancellationToken cancellationToken);
+        Task<bool> Update(Job job, CancellationToken cancellationToken);
     }
 
     public class JobRepository : IJobRepository
@@ -21,23 +25,50 @@ namespace TaskScheduler.Jobs.Data.Repositories
         {
             _db = db;
         }
-        public async Task Add(Job job, CancellationToken cancellationToken)
+        public async Task<Job> Add(Job job, CancellationToken cancellationToken)
         {
-            await _db.AddAsync(job, cancellationToken);
+            var created = await _db.AddAsync(job, cancellationToken);
             await _db.SaveChangesAsync(cancellationToken);
+            return created.Entity;
         }
 
-        public async Task Delete(int jobId, CancellationToken cancellationToken)
+        public async Task<bool> Delete(int jobId, CancellationToken cancellationToken)
         {
-            var job = _db.Entry(await _db.FindAsync<Job>(jobId));
+            var attachedJob = await _db.FindAsync<Job>(jobId);
+            if (attachedJob == null)
+            {
+                return false;
+            }
+            var job = _db.Entry(attachedJob);
             _db.Remove(job);
             await _db.SaveChangesAsync(cancellationToken);
+            return true;
         }
 
         public async Task<IEnumerable<Job>> All(CancellationToken cancellationToken)
         {
             // https://youtrack.jetbrains.com/issue/RSRP-464676
             return await _db.Jobs.ToListAsync(cancellationToken);
+        }
+
+        public async Task<Job> Get(Expression<Func<Job, bool>> predicate, CancellationToken cancellationToken)
+        {
+            return await _db.Jobs.FirstOrDefaultAsync(predicate, cancellationToken);
+        }
+
+        public async Task<bool> Update(Job job, CancellationToken cancellationToken)
+        {
+
+            try
+            {
+                _db.Jobs.Update(job);
+                await _db.SaveChangesAsync(cancellationToken);
+                return true;
+            }
+            catch (DbUpdateConcurrencyException concurrencyException)
+            {
+                return false;
+            }
         }
     }
 }
