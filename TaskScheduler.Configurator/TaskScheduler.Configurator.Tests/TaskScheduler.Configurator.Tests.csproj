@@ -6,6 +6,10 @@
     <IsPackable>false</IsPackable>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <PlatformTarget>x64</PlatformTarget>
+  </PropertyGroup>
+
   <ItemGroup>
     <Content Include="appsettings.json">
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
@@ -21,6 +25,7 @@
     <PackageReference Include="NBuilder" Version="5.0.0" />
     <PackageReference Include="Newtonsoft.Json" Version="10.0.3" />
     <PackageReference Include="xunit" Version="2.2.0" />
+    <PackageReference Include="xunit.analyzers" Version="0.7.0" />
     <PackageReference Include="xunit.runner.visualstudio" Version="2.2.0" />
 
     <PackageReference Include="system.runtime.serialization.xml" Version="4.3.0" />
@@ -28,6 +33,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\xunit2.ioc.autofac\xunit2.ioc.autofac.csproj" />
     <ProjectReference Include="..\TaskScheduler.Configurator\TaskScheduler.Configurator.csproj" />
   </ItemGroup>
 

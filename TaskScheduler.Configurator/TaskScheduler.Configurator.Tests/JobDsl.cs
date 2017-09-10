@@ -8,13 +8,16 @@ using TaskScheduler.Jobs.Data.Entities;
 
 namespace TaskScheduler.Configurator.Tests
 {
-    //public interface IJobDsl
-    //{
-    //    Task<Job> GenerateExistingJob();
-    //    Task<Job> GenerateNonExistingJob();
-    //}
+    public interface IJobDsl
+    {
+        Task<int> CreateJob(Job job);
+        Task<Job> GetJob(int jobId);
+        Task<Job> GenerateExistingJob();
+        Task<Job> GetExistingJob(int jobId);
+        Task<Job> GenerateNonExistingJob();
+    }
 
-    public class JobDsl
+    public class JobDsl : IJobDsl
     {
         private readonly HttpClient _httpClient;
 
@@ -23,7 +26,7 @@ namespace TaskScheduler.Configurator.Tests
             _httpClient = httpClient;
         }
 
-        internal async Task<int> CreateJob(Job job)
+        public async Task<int> CreateJob(Job job)
         {
             using (var json = JsonContent.Create(job))
             {
@@ -33,7 +36,7 @@ namespace TaskScheduler.Configurator.Tests
             }
         }
 
-        internal async Task<Job> GetJob(int jobId)
+        public async Task<Job> GetJob(int jobId)
         {
             var requestMessage = new HttpRequestMessage(HttpMethod.Get, $"{ApiPaths.JobApiPath}/{jobId}");
             var responseMessage = await _httpClient.SendAsync(requestMessage);

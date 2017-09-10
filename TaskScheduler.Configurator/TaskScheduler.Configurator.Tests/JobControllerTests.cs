@@ -4,44 +4,36 @@ using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 using FizzWare.NBuilder;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.TestHost;
 using Microsoft.Data.Sqlite;
-using Microsoft.Extensions.Configuration;
 using TaskScheduler.Configurator.Tests.Utils;
 using Xunit;
+using Xunit.Ioc.Autofac;
 
 namespace TaskScheduler.Configurator.Tests
 {
+    [UseAutofacTestFramework]
     public class JobControllerTests : IDisposable
     {
-        private readonly string _tempDatabasePath;
+        private readonly IJobDsl _jobDsl;
         private readonly HttpClient _client;
+        private readonly string _tempDatabasePath;
 
         public JobControllerTests()
         {
-            var config = new ConfigurationBuilder()
-                .AddJsonFile("appsettings.json").Build();
+            
+        }
 
-            var connectionStringBuilder = new SqliteConnectionStringBuilder
-            {
-                ConnectionString = $"{config.GetConnectionString("JobsDatabaseConnection")}.{Guid.NewGuid()}"
-            };
-
+        public JobControllerTests(IJobDsl jobDsl, HttpClient client, SqliteConnectionStringBuilder connectionStringBuilder)
+        {
+            _jobDsl = jobDsl;
+            _client = client;
             _tempDatabasePath = connectionStringBuilder.DataSource;
-
-            var host = new WebHostBuilder()
-                .UseConfiguration(config)
-                .UseSetting("ConnectionStrings:JobsDatabaseConnection", connectionStringBuilder.ConnectionString)
-                .UseStartup<Startup>();
-            var server = new TestServer(host);
-            _client = server.CreateClient();
         }
 
         [Fact]
         public async Task CreateJob()
         {
-            var job = await new JobDsl(_client).GenerateNonExistingJob();
+            var job = await _jobDsl.GenerateNonExistingJob();
             var requestMessage =
                 new HttpRequestMessage(HttpMethod.Put, ApiPaths.JobApiPath)
                 {
@@ -51,7 +43,7 @@ namespace TaskScheduler.Configurator.Tests
 
             Assert.Equal(HttpStatusCode.Created, responseMessage.StatusCode);
 
-            var createdJob = await new JobDsl(_client).GetExistingJob(UrlParser.ExtractIdFromLocationHeader(responseMessage, ApiPaths.JobApiPath));
+            var createdJob = await _jobDsl.GetExistingJob(UrlParser.ExtractIdFromLocationHeader(responseMessage, ApiPaths.JobApiPath));
 
             Assert.Equal(job.Name, createdJob.Name);
             Assert.Equal(job.Container, createdJob.Container);
@@ -63,7 +55,7 @@ namespace TaskScheduler.Configurator.Tests
         [Fact]
         public async Task UpdateExistingJobShouldUpdateSpecifiedFields()
         {
-            var existingJob = await new JobDsl(_client).GenerateExistingJob();
+            var existingJob = await _jobDsl.GenerateExistingJob();
             existingJob.Name = "updated";
 
             var requestMessage = new HttpRequestMessage(HttpMethod.Post, ApiPaths.JobApiPath)
@@ -74,7 +66,7 @@ namespace TaskScheduler.Configurator.Tests
             var responseMessage = await _client.SendAsync(requestMessage);
             Assert.Equal(HttpStatusCode.NoContent, responseMessage.StatusCode);
 
-            var updatedJob = await new JobDsl(_client).GetExistingJob(existingJob.Id);
+            var updatedJob = await _jobDsl.GetExistingJob(existingJob.Id);
             Assert.Equal(updatedJob.Name, existingJob.Name);
         }
 
@@ -91,11 +83,11 @@ namespace TaskScheduler.Configurator.Tests
         [Fact]
         public async Task UpdateNonExistingJobShouldReturnNotFound()
         {
-            var nonExistingJob = new JobDsl(_client).GenerateNonExistingJob();
+            var nonExistingJob = _jobDsl.GenerateNonExistingJob();
             var requestMessage = new HttpRequestMessage(HttpMethod.Post, ApiPaths.JobApiPath)
-                {
-                    Content = JsonContent.Create(nonExistingJob)
-                };
+            {
+                Content = JsonContent.Create(nonExistingJob)
+            };
             var responseMessage = await _client.SendAsync(requestMessage);
 
             Assert.Equal(HttpStatusCode.NotFound, responseMessage.StatusCode);
@@ -103,7 +95,6 @@ namespace TaskScheduler.Configurator.Tests
 
         public void Dispose()
         {
-            _client.Dispose();
             File.Delete(_tempDatabasePath);
         }
     }
