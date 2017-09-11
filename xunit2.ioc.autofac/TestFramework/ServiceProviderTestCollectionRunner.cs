@@ -1,15 +1,15 @@
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using Autofac;
 using Xunit.Abstractions;
 using Xunit.Sdk;
 
-namespace Xunit.Ioc.Autofac.TestFramework
+namespace Xunit.Extensions.Microsoft.DI.TestFramework
 {
-    public class AutofacTestCollectionRunner : TestCollectionRunner<AutofacTestCase>
+    public class ServiceProviderTestCollectionRunner : TestCollectionRunner<ServiceProviderTestMethodTestCase>
     {
-        public AutofacTestCollectionRunner(IContainer container, ITestCollection testCollection, IEnumerable<AutofacTestCase> testCases, IMessageSink diagnosticMessageSink, IMessageBus messageBus,
+        public ServiceProviderTestCollectionRunner(IServiceProvider container, ITestCollection testCollection, IEnumerable<ServiceProviderTestMethodTestCase> testCases, IMessageSink diagnosticMessageSink, IMessageBus messageBus,
             ITestCaseOrderer testCaseOrderer, ExceptionAggregator aggregator, CancellationTokenSource cancellationTokenSource)
             : base(testCollection, testCases, messageBus, testCaseOrderer, aggregator, cancellationTokenSource)
         {
@@ -17,18 +17,18 @@ namespace Xunit.Ioc.Autofac.TestFramework
             _diagnosticMessageSink = diagnosticMessageSink;
         }
 
-        protected override Task<RunSummary> RunTestClassAsync(ITestClass testClass, IReflectionTypeInfo reflectionTypeInfo, IEnumerable<AutofacTestCase> testCases)
+        protected override Task<RunSummary> RunTestClassAsync(ITestClass testClass, IReflectionTypeInfo reflectionTypeInfo, IEnumerable<ServiceProviderTestMethodTestCase> testCases)
         {
             var exceptionAggregator = new ExceptionAggregator(Aggregator);
 
-            var autofacTestClassRunner = new AutofacTestClassRunner(_container, testClass, reflectionTypeInfo, testCases, 
+            var autofacTestClassRunner = new ServiceProviderTestClassRunner(_container, testClass, reflectionTypeInfo, testCases, 
                 _diagnosticMessageSink, MessageBus, TestCaseOrderer, exceptionAggregator, 
                 CancellationTokenSource);
 
             return autofacTestClassRunner.RunAsync();
         }
 
-        private readonly IContainer _container;
+        private readonly IServiceProvider _container;
         private readonly IMessageSink _diagnosticMessageSink;
     }
 }

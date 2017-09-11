@@ -33,7 +33,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\xunit2.ioc.autofac\xunit2.ioc.autofac.csproj" />
+    <ProjectReference Include="..\..\xunit2.ioc.autofac\Xunit.Extensions.Microsoft.DI.csproj" />
     <ProjectReference Include="..\TaskScheduler.Configurator\TaskScheduler.Configurator.csproj" />
   </ItemGroup>
 

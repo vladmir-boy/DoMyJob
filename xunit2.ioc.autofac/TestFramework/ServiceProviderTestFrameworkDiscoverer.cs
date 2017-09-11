@@ -2,11 +2,11 @@ using System.Linq;
 using Xunit.Abstractions;
 using Xunit.Sdk;
 
-namespace Xunit.Ioc.Autofac.TestFramework
+namespace Xunit.Extensions.Microsoft.DI.TestFramework
 {
-    public class AutofacTestFrameworkDiscoverer : TestFrameworkDiscoverer
+    public class ServiceProviderTestFrameworkDiscoverer : TestFrameworkDiscoverer
     {
-        public AutofacTestFrameworkDiscoverer(IAssemblyInfo assemblyInfo, ISourceInformationProvider sourceProvider, IMessageSink diagnosticMessageSink)
+        public ServiceProviderTestFrameworkDiscoverer(IAssemblyInfo assemblyInfo, ISourceInformationProvider sourceProvider, IMessageSink diagnosticMessageSink)
             : base(assemblyInfo, sourceProvider, diagnosticMessageSink)
         {
             var testAssembly = new TestAssembly(assemblyInfo);
@@ -22,9 +22,9 @@ namespace Xunit.Ioc.Autofac.TestFramework
         {
             var methodDisplay = discoveryOptions.MethodDisplayOrDefault();
 
-            var hasAttribute = testClass.Class.GetCustomAttributes(typeof(UseAutofacTestFrameworkAttribute)).Any();
-            if (!hasAttribute)
-                return true;
+            //var hasAttribute = testClass.Class.GetCustomAttributes(typeof(UseServiceProviderTestFrameworkAttribute)).Any();
+            //if (!hasAttribute)
+            //    return true;
 
             foreach (var method in testClass.Class.GetMethods(includePrivateMethods: true))
             {
@@ -32,7 +32,7 @@ namespace Xunit.Ioc.Autofac.TestFramework
                     continue;
 
                 var testMethod = new TestMethod(testClass, method);
-                var testCase = new AutofacTestCase(methodDisplay, testMethod);
+                var testCase = new ServiceProviderTestMethodTestCase(methodDisplay, testMethod);
 
                 if (!ReportDiscoveredTestCase(testCase, includeSourceInformation, messageBus))
                     return false;

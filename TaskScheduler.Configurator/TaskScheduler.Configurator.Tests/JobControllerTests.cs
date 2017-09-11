@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Net;
 using System.Net.Http;
@@ -12,11 +11,9 @@ using Newtonsoft.Json;
 using TaskScheduler.Configurator.Tests.Utils;
 using TaskScheduler.Jobs.Data.Entities;
 using Xunit;
-using Xunit.Ioc.Autofac;
 
 namespace TaskScheduler.Configurator.Tests
 {
-    [UseAutofacTestFramework]
     public class JobControllerTests : IDisposable
     {
         private readonly IJobDsl _jobDsl;
@@ -30,6 +27,14 @@ namespace TaskScheduler.Configurator.Tests
 
         public JobControllerTests(IJobDsl jobDsl, HttpClient client, SqliteConnectionStringBuilder connectionStringBuilder)
         {
+            var namer = new RandomValuePropertyNamer(new RandomGenerator(),
+                new ReflectionUtil(),
+                true,
+                DateTime.Now,
+                DateTime.Now.AddDays(10),
+                true, new BuilderSettings());
+
+            BuilderSetup.SetDefaultPropertyName(namer);
             _jobDsl = jobDsl;
             _client = client;
             _tempDatabasePath = connectionStringBuilder.DataSource;
@@ -126,14 +131,6 @@ namespace TaskScheduler.Configurator.Tests
         [Fact]
         public async Task GetAllReturnsAllCreatedJobs()
         {
-            var namer = new RandomValuePropertyNamer(new RandomGenerator(),
-                new ReflectionUtil(),
-                true,
-                DateTime.Now,
-                DateTime.Now.AddDays(10),
-                true,  new BuilderSettings());
-
-            BuilderSetup.SetDefaultPropertyName(namer);
             var existingJob1 = await _jobDsl.GenerateExistingJob();
             var existingJob2 = await _jobDsl.GenerateExistingJob();
 

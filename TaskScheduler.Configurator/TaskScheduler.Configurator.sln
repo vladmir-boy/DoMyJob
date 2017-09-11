@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.26730.8
+VisualStudioVersion = 15.0.26730.12
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TaskScheduler.Configurator", "TaskScheduler.Configurator\TaskScheduler.Configurator.csproj", "{6D6E1E99-BC19-4CC3-A7B5-66FCDD5B36D3}"
 EndProject
@@ -9,7 +9,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TaskScheduler.Jobs.Data", "
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TaskScheduler.Configurator.Tests", "TaskScheduler.Configurator.Tests\TaskScheduler.Configurator.Tests.csproj", "{1943B64D-FDA0-4528-B6CD-9ECB693DA339}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "xunit2.ioc.autofac", "..\xunit2.ioc.autofac\xunit2.ioc.autofac.csproj", "{5C7B18E2-F0C9-42D2-B543-36C354E8FF34}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Xunit.Extensions.Microsoft.DI", "..\xunit2.ioc.autofac\Xunit.Extensions.Microsoft.DI.csproj", "{5C7B18E2-F0C9-42D2-B543-36C354E8FF34}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

@@ -8,6 +8,7 @@ namespace TaskScheduler.Jobs.Data
         { 
             
         }
+
         public DbSet<Job> Jobs { get; set; }
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {

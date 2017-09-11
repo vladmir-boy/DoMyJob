@@ -2,22 +2,22 @@ using System;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
-using Autofac;
+using Microsoft.Extensions.DependencyInjection;
 using Xunit.Abstractions;
-using Xunit.Ioc.Autofac.TestFramework;
+using Xunit.Extensions.Microsoft.DI.TestFramework;
 using Xunit.Sdk;
 
-namespace Xunit.Ioc.Autofac
+namespace Xunit.Extensions.Microsoft.DI
 {
-    public class AutofacTestInvoker : TestInvoker<AutofacTestCase>
+    public class ServiceProviderTestInvoker : TestInvoker<ServiceProviderTestMethodTestCase>
     {
         public const string TestLifetimeScopeTag = "TestLifetime";
 
-        public AutofacTestInvoker(ILifetimeScope container, ITest test, IMessageBus messageBus, Type testClass, object[] constructorArguments, MethodInfo testMethod, object[] testMethodArguments, ExceptionAggregator aggregator, CancellationTokenSource cancellationTokenSource) 
+        public ServiceProviderTestInvoker(IServiceProvider container, ITest test, IMessageBus messageBus, Type testClass, object[] constructorArguments, MethodInfo testMethod, object[] testMethodArguments, ExceptionAggregator aggregator, CancellationTokenSource cancellationTokenSource) 
             : base(test, messageBus, testClass, constructorArguments, testMethod, testMethodArguments, aggregator, cancellationTokenSource)
         {
-            _lifetimeScope = container.BeginLifetimeScope(TestLifetimeScopeTag);
-            _testOutputHelper = _lifetimeScope.Resolve<TestOutputHelper>();
+            _lifetimeScope = container.CreateScope();
+            _testOutputHelper = _lifetimeScope.ServiceProvider.GetService<TestOutputHelper>();
         }
 
         public string Output { get; set; }
@@ -43,10 +43,10 @@ namespace Xunit.Ioc.Autofac
 
         protected override object CreateTestClass()
         {
-            return _lifetimeScope.Resolve(TestClass);
+            return _lifetimeScope.ServiceProvider.GetService(TestClass);
         }
 
-        private readonly ILifetimeScope _lifetimeScope;
+        private readonly IServiceScope _lifetimeScope;
         private readonly TestOutputHelper _testOutputHelper;
     }
 }

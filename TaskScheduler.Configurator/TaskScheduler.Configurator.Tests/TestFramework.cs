@@ -1,46 +1,46 @@
 ﻿using System;
+using System.Linq;
 using System.Net.Http;
-using System.Reflection;
-using Autofac;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Xunit.Abstractions;
-using Xunit.Ioc.Autofac;
+using Xunit.Extensions.Microsoft.DI;
 using Xunit.Sdk;
 
 namespace TaskScheduler.Configurator.Tests
 {
-    public class IntegrationTestFramework : AutofacTestFramework
+    public class IntegrationTestFramework : ServiceProviderTestFramework
     {
         private const string TestSuffixConvention = "Tests";
 
         public IntegrationTestFramework(IMessageSink diagnosticMessageSink)
             : base(diagnosticMessageSink)
         {
-            var builder = new ContainerBuilder();
-            builder.RegisterAssemblyTypes(Assembly.GetExecutingAssembly())
-                .Where(t => t.Name.EndsWith(TestSuffixConvention));
-
-            builder.Register(context => new TestOutputHelper())
-                .As<ITestOutputHelper>().AsSelf()
-                .InstancePerLifetimeScope();
-            builder.Register(context => new ConfigurationBuilder()
-                .AddJsonFile("appsettings.json").Build()).As<IConfiguration>().SingleInstance();
-            builder.Register(context =>
+            var builder = new ServiceCollection();
+            foreach (var testClassType in GetType().Assembly.GetTypes().Where(t=>t.FullName.EndsWith(TestSuffixConvention)))
             {
-                var config = context.Resolve<IConfiguration>();
+                builder.AddTransient(testClassType);
+            }
+
+            builder.AddTransient<ITestOutputHelper>(context => new TestOutputHelper());
+            builder.AddSingleton<IConfiguration>(context => new ConfigurationBuilder()
+                .AddJsonFile("appsettings.json").Build());
+            builder.AddScoped(context =>
+            {
+                var config = context.GetService<IConfiguration>();
                 return new SqliteConnectionStringBuilder
                 {
                     ConnectionString = $"{config.GetConnectionString("JobsDatabaseConnection")}.{Guid.NewGuid()}"
                 };
-            }).AsSelf().InstancePerLifetimeScope();
-            builder.Register(context => CreateClient(context.Resolve<IConfiguration>(),
-                context.Resolve<SqliteConnectionStringBuilder>())).AsSelf().InstancePerLifetimeScope();
-            builder.RegisterType<JobDsl>().As<IJobDsl>().InstancePerLifetimeScope();
+            });
+            builder.AddSingleton(context => CreateClient(context.GetService<IConfiguration>(),
+                context.GetService<SqliteConnectionStringBuilder>()));
+            builder.AddSingleton<IJobDsl, JobDsl>();
 
-            Container = builder.Build();
+            Container = builder.BuildServiceProvider();
         }
 
         private static HttpClient CreateClient(IConfiguration config, SqliteConnectionStringBuilder connectionStringBuilder)
