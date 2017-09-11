@@ -24,35 +24,26 @@ namespace TaskScheduler.Configurator.Tests
                 .Where(t => t.Name.EndsWith(TestSuffixConvention));
 
             builder.Register(context => new TestOutputHelper())
-                .AsSelf()
-                .As<ITestOutputHelper>()
+                .As<ITestOutputHelper>().AsSelf()
                 .InstancePerLifetimeScope();
+            builder.Register(context => new ConfigurationBuilder()
+                .AddJsonFile("appsettings.json").Build()).As<IConfiguration>().SingleInstance();
             builder.Register(context =>
             {
-                return new ConfigurationBuilder()
-                    .AddJsonFile("appsettings.json").Build();
-            }).As<IConfigurationRoot>().SingleInstance();
-            builder.Register(context =>
-            {
-                var config = context.Resolve<IConfigurationRoot>();
+                var config = context.Resolve<IConfiguration>();
                 return new SqliteConnectionStringBuilder
                 {
                     ConnectionString = $"{config.GetConnectionString("JobsDatabaseConnection")}.{Guid.NewGuid()}"
                 };
             }).AsSelf().InstancePerLifetimeScope();
-            builder.Register(context =>
-            {
-                return CreateClient(context.Resolve<IConfigurationRoot>(),
-                    context.Resolve<SqliteConnectionStringBuilder>());
-            }).AsSelf().InstancePerLifetimeScope();
+            builder.Register(context => CreateClient(context.Resolve<IConfiguration>(),
+                context.Resolve<SqliteConnectionStringBuilder>())).AsSelf().InstancePerLifetimeScope();
             builder.RegisterType<JobDsl>().As<IJobDsl>().InstancePerLifetimeScope();
-            // configure your container
-            // e.g. builder.RegisterModule<TestOverrideModule>();
 
             Container = builder.Build();
         }
 
-        private static HttpClient CreateClient(IConfigurationRoot config, SqliteConnectionStringBuilder connectionStringBuilder)
+        private static HttpClient CreateClient(IConfiguration config, SqliteConnectionStringBuilder connectionStringBuilder)
         {
             var host = new WebHostBuilder()
                 .UseConfiguration(config)

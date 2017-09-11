@@ -61,11 +61,12 @@ namespace TaskScheduler.Configurator.Controllers
         }
 
         [HttpDelete]
+        [Route("{id:int}")]
         [SwaggerResponse((int)HttpStatusCode.NoContent)]
         [SwaggerResponse((int)HttpStatusCode.NotFound)]
-        public async Task<IActionResult> Delete(int jobId, CancellationToken cancellationToken)
+        public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken)
         {
-            var found = await _jobRepository.Delete(jobId, cancellationToken);
+            var found = await _jobRepository.Delete(id, cancellationToken);
             if (!found)
             {
                 return NotFound();

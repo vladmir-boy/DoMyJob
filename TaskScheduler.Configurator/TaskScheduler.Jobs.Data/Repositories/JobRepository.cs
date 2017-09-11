@@ -39,8 +39,8 @@ namespace TaskScheduler.Jobs.Data.Repositories
             {
                 return false;
             }
-            var job = _db.Entry(attachedJob);
-            _db.Remove(job);
+
+            _db.Remove(attachedJob);
             await _db.SaveChangesAsync(cancellationToken);
             return true;
         }

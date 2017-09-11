@@ -11,9 +11,10 @@ using TaskScheduler.Jobs.Data;
 namespace TaskScheduler.Jobs.Data.Migrations
 {
     [DbContext(typeof(JobDatabase))]
-    partial class JobDatabaseModelSnapshot : ModelSnapshot
+    [Migration("20170911200146_AddCronExpression")]
+    partial class AddCronExpression
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

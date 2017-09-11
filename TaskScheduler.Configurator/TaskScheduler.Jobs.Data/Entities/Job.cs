@@ -10,5 +10,6 @@ namespace TaskScheduler.Jobs.Data.Entities
         public DateTimeOffset CreateDate { get; set; }
         public DateTimeOffset LastExecutionDate { get; set; }
         public bool IsActive { get; set; }
+        public string Cron { get; set; }
     }
 }

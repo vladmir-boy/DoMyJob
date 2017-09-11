@@ -1,11 +1,16 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 using FizzWare.NBuilder;
+using FizzWare.NBuilder.Implementation;
+using FizzWare.NBuilder.PropertyNaming;
 using Microsoft.Data.Sqlite;
+using Newtonsoft.Json;
 using TaskScheduler.Configurator.Tests.Utils;
+using TaskScheduler.Jobs.Data.Entities;
 using Xunit;
 using Xunit.Ioc.Autofac;
 
@@ -73,7 +78,7 @@ namespace TaskScheduler.Configurator.Tests
         [Fact]
         public async Task GetNonExistingJobShouldReturnNotFound()
         {
-            var nonExistingJobId = Builder<int>.CreateNew();
+            var nonExistingJobId = Builder<int>.CreateNew().Build();
             var requestMessage = new HttpRequestMessage(HttpMethod.Get, $"{ApiPaths.JobApiPath}/{nonExistingJobId}");
             var responseMessage = await _client.SendAsync(requestMessage);
 
@@ -91,6 +96,55 @@ namespace TaskScheduler.Configurator.Tests
             var responseMessage = await _client.SendAsync(requestMessage);
 
             Assert.Equal(HttpStatusCode.NotFound, responseMessage.StatusCode);
+        }
+
+        [Fact]
+        public async Task DeleteNonExistingJobShouldReturnNotFound()
+        {
+            var nonExistingJobId = Builder<int>.CreateNew().Build();
+            var requestMessage = new HttpRequestMessage(HttpMethod.Delete, $"{ApiPaths.JobApiPath}/{nonExistingJobId}");
+
+            var responseMessage = await _client.SendAsync(requestMessage);
+
+            Assert.Equal(HttpStatusCode.NotFound, responseMessage.StatusCode);
+        }
+
+        [Fact]
+        public async Task DeleteExistingJobShouldSucceed()
+        {
+            var existingJob = await _jobDsl.GenerateExistingJob();
+
+            var requestMessage = new HttpRequestMessage(HttpMethod.Delete, $"{ApiPaths.JobApiPath}/{existingJob.Id}");
+
+            var responseMessage = await _client.SendAsync(requestMessage);
+            Assert.Equal(HttpStatusCode.NoContent, responseMessage.StatusCode);
+
+            var deletedJob = await _jobDsl.GetExistingJob(existingJob.Id);
+            Assert.Null(deletedJob);
+        }
+
+        [Fact]
+        public async Task GetAllReturnsAllCreatedJobs()
+        {
+            var namer = new RandomValuePropertyNamer(new RandomGenerator(),
+                new ReflectionUtil(),
+                true,
+                DateTime.Now,
+                DateTime.Now.AddDays(10),
+                true,  new BuilderSettings());
+
+            BuilderSetup.SetDefaultPropertyName(namer);
+            var existingJob1 = await _jobDsl.GenerateExistingJob();
+            var existingJob2 = await _jobDsl.GenerateExistingJob();
+
+            var requestMessage = new HttpRequestMessage(HttpMethod.Get, $"{ApiPaths.JobApiPath}");
+
+            var responseMessage = await _client.SendAsync(requestMessage);
+            Assert.Equal(HttpStatusCode.OK, responseMessage.StatusCode);
+
+            var jobs = JsonConvert.DeserializeObject<Job[]>(await responseMessage.Content.ReadAsStringAsync());
+            Assert.Contains(jobs, job => job.Id == existingJob1.Id );
+            Assert.Contains(jobs, job => job.Id == existingJob2.Id );
         }
 
         public void Dispose()
